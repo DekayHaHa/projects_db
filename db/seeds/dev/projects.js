@@ -2,8 +2,7 @@ const projectsData = require('../projectsData')
 
 const createProject = (knex, project) => {
   return knex('projects').insert({
-    name: project.name,
-    desc: project.desc
+    name: project.name
   }, 'id')
     .then(projectId => {
       let palettePromises = [];
