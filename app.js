@@ -91,7 +91,7 @@ app.post('/api/projects/palettes/:project_id', (req, res) => { // foreign id
 
   database('palettes').insert(palette, 'id')
     .then(paletteId => {
-      res.status(201).json({ id: paletteId[0] })
+      res.status(200).json({ id: paletteId[0] })
     })
     .catch(err => res.status(500).json(err))
 })
@@ -99,10 +99,9 @@ app.post('/api/projects/palettes/:project_id', (req, res) => { // foreign id
 app.patch('/api/projects/:id', (req, res) => {
   const id = req.params.id
   const project = req.body
-
-  for (let requiredParam of ['name', 'desc']) {
+  for (let requiredParam of ['name']) {
     if (!project[requiredParam]) {
-      const errMsg = { error: `Expected format: { name: <String>, desc: <String> }. You're missing a "${requiredParam}" property.` }
+      const errMsg = { error: `Expected format of request: { name: <String> }.` }
       return res.status(422).json(errMsg)
     }
   }
@@ -136,7 +135,7 @@ app.patch('/api/projects/palettes/:id', (req, res) => {
 
   database('palettes').where('id', id).update(palette, 'id')
     .then(paletteId => {
-      res.status(200).json(`palette Id: ${paletteId} updated.`)
+      res.status(200).json({ id: paletteId[0] })
     })
     .catch(err => res.status(500).json(err))
 })
