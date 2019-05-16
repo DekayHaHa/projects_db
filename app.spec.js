@@ -113,7 +113,7 @@ describe('/api', () => {
 
       const palette = palettes[0]
 
-      expect(response.status).toBe(201)
+      expect(response.status).toBe(200)
       expect(palette.name).toBe(mockpalette.name)
     })
     it('Should return error msg and status 422 if incorrect request', async () => {
@@ -128,7 +128,7 @@ describe('/api', () => {
       const project = await database('projects').first()
 
 
-      const response = await request(app).post(`/api/projects/palettes/${project.id - 1}`).send(mockpalette)
+      const response = await request(app).post(`/api/projects/palettes/${project.id}`).send(mockpalette)
 
       const errMsg = {
         error: `Expected format: 
@@ -145,35 +145,132 @@ describe('/api', () => {
     })
   })
   describe('PATCH /projects/:id', () => {
-    it.skip('Should update project and return status 200', async () => {
+    it('Should update project and return status 200', async () => {
+      const project = await database('projects').first()
+      expect(project.name).toBe('Project 1')
+      const projectNewName = { name: 'New Name' }
+      const response = await request(app).patch(`/api/projects/${project.id}`).send(projectNewName)
 
+      const updatedProject = await database('projects').where('name', 'New Name').select()
+
+      expect(response.status).toBe(200)
+      expect(updatedProject[0].name).toBe(projectNewName.name)
     })
-    it.skip('Should return error msg and status 422 if incorrect request', async () => {
+    it('Should return error msg and status 422 if incorrect request', async () => {
+      const projectNoName = {}
+      const errMsg = { error: `Expected format of request: { name: <String> }.` }
+      const project = await database('projects').first()
 
+      const response = await request(app).patch(`/api/projects/${project.id}`).send(projectNoName)
+
+      expect(response.status).toBe(422)
+      expect(response.body).toEqual(errMsg)
     })
   })
   describe('PATCH /projects/palettes/:id', () => {
-    it.skip('Should update palettes and return status 200', async () => {
+    it('Should update palettes and return status 200', async () => {
+      const palette = await database('palettes').first()
+      expect(palette.name).toBe('Warm Colors')
+      const paletteNewName = {
+        name: 'New Name',
+        color1: '#111111',
+        color2: '#222222',
+        color3: '#333333',
+        color4: '#444444',
+        color5: '#555555',
+      }
+      const response = await request(app).patch(`/api/projects/palettes/${palette.id}`).send(paletteNewName)
 
+      const updatedpalette = await database('palettes').where('id', response.body.id)
+      expect(response.status).toBe(200)
+      expect(updatedpalette[0].name).toBe(paletteNewName.name)
     })
-    it.skip('Should return error msg and status 422 if incorrect request', async () => {
+    it('Should return error msg and status 422 if incorrect request', async () => {
+      const paletteNoName = {
+        color1: '#111111',
+        color2: '#222222',
+        color3: '#333333',
+        color4: '#444444',
+        color5: '#555555',
+      }
+      const missing = 'name'
+      const errMsg = {
+        error: `Expected format: 
+        { name: <String>,
+          color1: <String>,
+          color2: <String>,
+          color3: <String>,
+          color4: <String>,
+          color5: <String> }. You're missing a "${missing}" property.`
+      }
+      const palette = await database('palettes').first()
 
+      const response = await request(app).patch(`/api/projects/palettes/${palette.id}`).send(paletteNoName)
+
+      expect(response.status).toBe(422)
+      expect(response.body).toEqual(errMsg)
     })
   })
   describe('DELETE /projects/:id', () => {
-    it.skip('Should remove project and return status 200', async () => {
+    it('Should remove project and return status 200', async () => {
+      await database.seed.run()
 
+      const projectToDelete = await database('projects').first()
+      const id = projectToDelete.id
+
+      const firstLengthCheck = await database('projects')
+      expect(firstLengthCheck.length).toBe(2)
+
+      const response = await request(app).delete(`/api/projects/${id}`)
+
+      expect(response.status).toBe(200)
+
+      const secondLengthCheck = await database('projects')
+
+      expect(secondLengthCheck.length).toBe(1)
     })
-    it.skip('Should return error msg and status 404 if project not found', async () => {
+    it('Should return error msg and status 404 if project not found', async () => {
+      await database.seed.run()
 
+      const projectToDelete = await database('projects').first()
+      const id = projectToDelete.id - 1
+      const notFound = `No Projects with an ID of ${id} Found`
+
+      const response = await request(app).delete(`/api/projects/${id}`)
+
+      expect(response.status).toBe(404)
+      expect(response.body).toBe(notFound)
     })
   })
   describe('DELETE /projects/palettes/:id', () => {
-    it.skip('Should remove palette and return status 200', async () => {
+    it('Should remove palette and return status 200', async () => {
+      await database.seed.run()
 
+      const paletteToDelete = await database('palettes').first()
+      const id = paletteToDelete.id
+
+      const firstLengthCheck = await database('palettes')
+      expect(firstLengthCheck.length).toBe(4)
+
+      const response = await request(app).delete(`/api/projects/palettes/${id}`)
+
+      expect(response.status).toBe(200)
+
+      const secondLengthCheck = await database('palettes')
+
+      expect(secondLengthCheck.length).toBe(3)
     })
-    it.skip('Should return error msg and status 404 if palette not found', async () => {
+    it('Should return error msg and status 404 if palette not found', async () => {
+      await database.seed.run()
 
+      const paletteToDelete = await database('palettes').first()
+      const id = paletteToDelete.id - 1
+      const notFound = `No palettes with an ID of ${id} found`
+
+      const response = await request(app).delete(`/api/projects/palettes/${id}`)
+
+      expect(response.status).toBe(404)
+      expect(response.body).toEqual(notFound)
     })
   })
 })
